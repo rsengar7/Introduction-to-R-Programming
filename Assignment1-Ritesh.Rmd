@@ -1,0 +1,97 @@
+---
+title: "Assignment1"
+author: "Ritesh Sengar"
+date: "2023-10-18"
+output: html_document
+---
+
+
+## Understanding the Source of data and other data characteristics:
+Source : http://data.un.org/Data.aspx?d=IFS&f=SeriesCode%3ac2
+International Financial Statistics (IFS) is a standard source of international statistics on all aspects of international and domestic finance. It reports, for most countries of the world, current data needed in the analysis of problems of international payments and of inflation and deflation, i.e., data on exchange rates, international liquidity, international banking, money and banking, interest rates, prices, production, international transactions, government accounts, and national accounts. The data contains total of 8669 records and contains the columns OID, Country or Area, Year, Description, Magnitude and Value.
+
+
+```{r ReadData}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+
+# Load the data from the CSV file
+data <- read.csv("Assignment1-Ritesh.csv", header = TRUE)
+# Display the first 10 rows of the DataFrame
+first_10_rows <- head(data, n = 10)
+
+kable(first_10_rows, "html") %>%
+  kable_styling("striped")
+```
+
+```{r summary}
+# Describe the summary of data
+summary(data)
+
+```
+
+Dataframe is tidy because all columns are variables and no values are present as column names. Each observation is seperate observation and is present in its individual row. Each values has its own cell and no-combination of different values is seen here.
+
+## Making it Untidy by applying pivot_wider
+
+```{r}
+#Pivot Wider to make it untidy
+data <- data |> pivot_wider(names_from=Year,values_from = Value)
+kable(head(data), "html") %>%
+  kable_styling("striped")
+```
+
+The data is now untidy because the values are spread across multiple columns, one column for each category type. This makes it difficult to perform calculations on the data, and to consider it as tidy data all the values need to be combined in a single column
+
+## Making it tidy again
+
+Dataframe is tidy because all columns are variables and no values are present as column names. Each observation is seperate observation and is present in its individual row. Each values has its own cell and no-combination of different values is seen here.
+
+
+```{r}
+selected_columns <- data[, 5:ncol(data)]
+col_names <- colnames(selected_columns)
+data <- data |> pivot_longer(all_of(col_names), names_to = "Year",values_to = "Value")
+
+kable(head(data), "html") %>%
+  kable_styling("striped")
+```
+
+
+## Cash Payment in Algeria after year 2000
+```{r}
+df <- data[data$Country.or.Area == 'ALGERIA' & data$Year > 2000, ]
+ggplot(df, aes(x = Year, y = Value)) +
+  geom_point() +
+  labs(title = "Cash Payment in ALGERIA after Year 2000",
+       x = "Year",
+       y = "Cash Amount")
+
+```
+
+
+As per the plot Exchange Amount was quite low at the initial years and started showing flow starting from 2005 and maximum in 2008
+
+```{r}
+# List of countries you want to filter
+selected_countries <- c('INDIA', 'UNITED STATES', 'ALGERIA', 'AUSTRALIA', 'BELIZE', 'BRAZIL')
+
+# Filter the dataframe for the year 2008
+df_2008 <- data[data$Year == 2008,]
+
+# Filter the dataframe for the selected countries
+df_2008 <- subset(df_2008, Country.or.Area %in% selected_countries)
+
+# Create a bar plot for the selected countries in 2008
+ggplot(df_2008, aes(x=df_2008$Country.or.Area, y=Value,fill= Value)) + 
+  geom_bar(stat = "identity") +
+  labs(title = "Cash Flow in Selected Countries in 2008",
+       x = "Country",
+       y = "Percentage of Amount Flow")
+
+```
+
+As per the bar chart it is indicated that in 2008 India is the leading country in terms of cash payments followed by United States and Brazil
